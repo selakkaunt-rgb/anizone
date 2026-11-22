@@ -48,6 +48,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
     MessageOriginChannel,
+    ReplyParameters,
     TelegramObject,
 )
 
@@ -218,7 +219,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "reply_failed": "⚠️ Javobni yetkazib bo'lmadi (foydalanuvchi botni bloklagan bo'lishi mumkin).",
         "btn_write_again": "✍️ Yana yozish",
         # forced subscription
-        "sub_text": "<b>🔒 Obuna kerak</b>\n{sep}\nBotdan foydalanish uchun quyidagi kanallarga a'zo bo'ling, so'ng «Tekshirish» tugmasini bosing.",
+        "sub_text": "<b>🔒 Obuna kerak</b>\n{sep}\nBotdan foydalanish uchun quyidagi kanallarga a'zo bo'ling, so'ng «Tekshirish» tugmasini bosing.\n\n💎 VIP egalari obunadan ozod.",
         "sub_not_yet": "Hali hammasiga a'zo bo'lmagansiz.",
         "sub_ok": "✅ Rahmat!",
         # admin panel
@@ -263,7 +264,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "btn_mode_seq": "📥 Ketma-ket",
         "btn_mode_custom": "🎯 Maxsus",
         "ep_seq_intro": "<b>{name}</b>\nVideolarni birin-ketin yuboring. Birinchisi {next}-qism bo'ladi.\n\nTugagach «Tugatish» ni bosing.",
-        "ep_seq_status": "<b>{name}</b>\n📥 Qo'shildi: {n} ta ({eps})\n\nDavom eting yoki «Tugatish» ni bosing.",
+        "ep_seq_added": "✅ <b>{n}-qism</b> qo'shildi. Keyingisini yuboring yoki tugating.",
         "ep_seq_failed": "<b>{name}</b>\n⚠️ Qismlarni saqlashda xatolik. Videolarni qayta yuboring.",
         "btn_finish": "✅ Tugatish",
         "ep_need_video": "⚠️ Video yuboring (yoki video fayl).",
@@ -271,8 +272,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "ep_bad_number": "⚠️ Qism raqamini yuboring (faqat raqam, 1 dan boshlab).",
         "ep_custom_video": "Endi {n}-qism videosini yuboring.",
         "ep_custom_video_replace": "⚠️ {n}-qism mavjud. Yangi video uni almashtiradi. Videoni yuboring.",
-        "ep_custom_saved": "✅ {n}-qism saqlandi. Keyingi qism raqamini yuboring yoki «Tugatish» ni bosing.",
-        "ep_custom_saved_replaced": "✅ {n}-qism almashtirildi. Keyingi qism raqamini yuboring yoki «Tugatish» ni bosing.",
+        "ep_custom_saved": "✅ <b>{n}-qism</b> qo'shildi. Keyingi qism raqamini yuboring yoki tugating.",
+        "ep_custom_saved_replaced": "✅ <b>{n}-qism</b> almashtirildi. Keyingi qism raqamini yuboring yoki tugating.",
         "ep_none_added": "Hech qanday qism qo'shilmadi.",
         "ep_done": "Qo'shilgan qismlar: {n} ta ({eps}).",
         # delete episode
@@ -447,7 +448,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "reply_sent": "✅ Ответ отправлен.",
         "reply_failed": "⚠️ Не удалось доставить ответ (возможно, пользователь заблокировал бота).",
         "btn_write_again": "✍️ Написать ещё",
-        "sub_text": "<b>🔒 Нужна подписка</b>\n{sep}\nЧтобы пользоваться ботом, подпишитесь на каналы ниже, затем нажмите «Проверить».",
+        "sub_text": "<b>🔒 Нужна подписка</b>\n{sep}\nЧтобы пользоваться ботом, подпишитесь на каналы ниже, затем нажмите «Проверить».\n\n💎 Владельцы VIP освобождены от подписки.",
         "sub_not_yet": "Вы подписались ещё не на все каналы.",
         "sub_ok": "✅ Спасибо!",
         "admin_title": "🛠 Админ-панель",
@@ -488,7 +489,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "btn_mode_seq": "📥 Последовательно",
         "btn_mode_custom": "🎯 Свой номер",
         "ep_seq_intro": "<b>{name}</b>\nОтправляйте видео одно за другим. Первое станет серией {next}.\n\nКогда закончите, нажмите «Завершить».",
-        "ep_seq_status": "<b>{name}</b>\n📥 Добавлено: {n} ({eps})\n\nПродолжайте или нажмите «Завершить».",
+        "ep_seq_added": "✅ <b>Серия {n}</b> добавлена. Отправьте следующую или завершите.",
         "ep_seq_failed": "<b>{name}</b>\n⚠️ Ошибка при сохранении серий. Отправьте видео ещё раз.",
         "btn_finish": "✅ Завершить",
         "ep_need_video": "⚠️ Отправьте видео (или видеофайл).",
@@ -496,8 +497,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "ep_bad_number": "⚠️ Отправьте номер серии (только число, начиная с 1).",
         "ep_custom_video": "Теперь отправьте видео серии {n}.",
         "ep_custom_video_replace": "⚠️ Серия {n} уже есть. Новое видео заменит её. Отправьте видео.",
-        "ep_custom_saved": "✅ Серия {n} сохранена. Отправьте номер следующей серии или нажмите «Завершить».",
-        "ep_custom_saved_replaced": "✅ Серия {n} заменена. Отправьте номер следующей серии или нажмите «Завершить».",
+        "ep_custom_saved": "✅ <b>Серия {n}</b> добавлена. Отправьте номер следующей серии или завершите.",
+        "ep_custom_saved_replaced": "✅ <b>Серия {n}</b> заменена. Отправьте номер следующей серии или завершите.",
         "ep_none_added": "Ни одной серии не добавлено.",
         "ep_done": "Добавлено серий: {n} ({eps}).",
         "delep_none": "У <b>{name}</b> нет серий.",
@@ -1196,6 +1197,16 @@ async def send(chat_id: int, text: str, markup: Optional[InlineKeyboardMarkup] =
     return await safe(lambda: BOT.send_message(chat_id, text, reply_markup=markup))
 
 
+async def reply_to(chat_id: int, message_id: int, text: str, markup: Optional[InlineKeyboardMarkup] = None) -> Optional[Message]:
+    """Send text as a reply to one specific message (Telegram shows the quoted message above it)."""
+    return await safe(
+        lambda: BOT.send_message(
+            chat_id, text, reply_markup=markup,
+            reply_parameters=ReplyParameters(message_id=message_id, allow_sending_without_reply=True),
+        )
+    )
+
+
 def _plain_emoji(value: str) -> str:
     return value.replace("\ufe0f", "").strip()
 
@@ -1452,7 +1463,7 @@ async def missing_channels(user_id: int, force: bool = False) -> list:
 
 def sub_prompt(lang: str, missing: list) -> tuple[str, InlineKeyboardMarkup]:
     rows = [[btn(f"➕ {short(ch['title'], 40)}", url=ch["invite_link"])] for ch in missing if ch["invite_link"]]
-    rows.append([btn(t(lang, "btn_check"), Nav(to="subcheck"))])
+    rows.append([btn(t(lang, "btn_check"), Nav(to="subcheck")), btn(t(lang, "btn_vip"), Nav(to="vip"))])
     return t(lang, "sub_text"), kb(*rows)
 
 
@@ -1462,7 +1473,6 @@ class EpSession:
     anime_uid: int
     anime_name: str
     chat_id: int
-    status_mid: int
     lang: str
     buffer: list[tuple[int, str, str]] = field(default_factory=list)  # (message_id, file_id, type)
     added: list[int] = field(default_factory=list)
@@ -1478,7 +1488,8 @@ def ep_status_kb(lang: str) -> InlineKeyboardMarkup:
 
 
 async def ep_flush(admin_id: int) -> None:
-    """Save buffered uploads in the order they were sent (sorted by message id)."""
+    """Save buffered uploads in the order they were sent (sorted by message id), then answer EVERY
+    video with its own reply "✅ N-qism qo'shildi..." that carries the «Tugatish» button."""
     sess = EP_SESSIONS.get(admin_id)
     if not sess:
         return
@@ -1489,19 +1500,16 @@ async def ep_flush(admin_id: int) -> None:
         sess.buffer = []
         try:
             nums = await db_ep_add_seq(sess.anime_uid, [(fid, ftype) for _, fid, ftype in items])
-            sess.added.extend(nums)
-            text = t(
-                sess.lang, "ep_seq_status",
-                name=esc(sess.anime_name), n=len(sess.added), eps=compress_numbers(sess.added),
-            )
         except Exception as e:
             log.error("Saving episodes failed: %s", e)
-            text = t(sess.lang, "ep_seq_failed", name=esc(sess.anime_name))
-        await safe(
-            lambda: BOT.edit_message_text(
-                text, chat_id=sess.chat_id, message_id=sess.status_mid, reply_markup=ep_status_kb(sess.lang)
+            await reply_to(
+                sess.chat_id, items[0][0], t(sess.lang, "ep_seq_failed", name=esc(sess.anime_name)), ep_status_kb(sess.lang)
             )
-        )
+            return
+        sess.added.extend(nums)
+        for (mid, _, _), num in zip(items, nums):
+            await reply_to(sess.chat_id, mid, t(sess.lang, "ep_seq_added", n=num), ep_status_kb(sess.lang))
+            await asyncio.sleep(0.05)  # stay well below Telegram's per-chat flood limit
 
 
 async def _ep_delayed(admin_id: int, gen: int) -> None:
@@ -1544,7 +1552,7 @@ class ContextMiddleware(BaseMiddleware):
             return bool(event.text and event.text.startswith("/start"))
         if isinstance(event, CallbackQuery):
             data = event.data or ""
-            return data.startswith("n:subcheck") or data.startswith("lg:")
+            return data.startswith("n:subcheck") or data.startswith("lg:") or data == "n:vip"
         return False
 
     async def __call__(self, handler, event, data):
@@ -1677,7 +1685,7 @@ async def cb_lang(cb: CallbackQuery, callback_data: LangCb, state: FSMContext, u
     await state.update_data(welcome=True)
     if isinstance(cb.message, Message):
         await safe(cb.message.delete)
-    if not is_staff(user.id):
+    if not is_staff(user.id) and not uinfo.is_vip:
         missing = await missing_channels(user.id)
         if missing:
             text, markup = sub_prompt(code, missing)
@@ -2268,7 +2276,7 @@ async def cb_ep_mode(cb: CallbackQuery, callback_data: Act, state: FSMContext, l
             return
         await state.set_state(AddEp.seq)
         EP_SESSIONS[admin_id] = EpSession(
-            anime_uid=a["uid"], anime_name=a["name"], chat_id=admin_id, status_mid=msg.message_id, lang=lang
+            anime_uid=a["uid"], anime_name=a["name"], chat_id=admin_id, lang=lang
         )
     else:
         ranges = await db_ep_ranges(a["uid"])
@@ -2330,7 +2338,7 @@ async def msg_ep_custom_video(message: Message, state: FSMContext, lang: str):
         added.append(num)
     await state.update_data(added=added)
     await state.set_state(AddEp.custom_num)
-    await message.answer(
+    await message.reply(
         t(lang, "ep_custom_saved_replaced" if replaced else "ep_custom_saved", n=num), reply_markup=ep_status_kb(lang)
     )
 
@@ -2343,7 +2351,10 @@ async def cb_ep_finish(cb: CallbackQuery, state: FSMContext, lang: str):
     data = await state.get_data()
     anime_uid, nums = (sess.anime_uid, sess.added) if sess else (data.get("uid"), data.get("added", []))
     await state.clear()
-    if not nums or not anime_uid:
+    if not anime_uid:  # a leftover button from a session that is already finished
+        await _edit_markup(cb, kb([]))
+        return
+    if not nums:
         await render(cb, card(t(lang, "a_add_ep"), t(lang, "ep_none_added")), kb_panel(lang))
         return
     text = t(lang, "ep_done", n=len(nums), eps=compress_numbers(nums))
@@ -2718,13 +2729,15 @@ async def cb_vip_duration(cb: CallbackQuery, callback_data: Act, lang: str):
     else:
         current = row["vip_until"]
         until = (current if current and current > now else now) + timedelta(days=days)
+    was_vip = bool(row["vip_until"] and row["vip_until"] > now)
     await save_vip(uid, until)
     ul = await lang_of(uid)
     if until:
         await send(uid, card(t(ul, "vip_title"), t(ul, "vip_received", until=fmt_until(until))), kb_home(ul))
         result = t(lang, "vip_given", until=fmt_until(until))
     else:
-        await send(uid, card(t(ul, "vip_title"), t(ul, "vip_removed")), kb_home(ul))
+        if was_vip:
+            await send(uid, card(t(ul, "vip_title"), t(ul, "vip_removed")), kb_home(ul))
         result = t(lang, "vip_removed_owner")
     await render(cb, card(t(lang, "o_vip"), result), kb([btn(t(lang, "btn_back"), Act(action="o_vip"))]))
 
