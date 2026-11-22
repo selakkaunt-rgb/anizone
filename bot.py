@@ -67,12 +67,27 @@ DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 PORT = int(os.getenv("PORT", "10000"))
 
 # ----------------------------------------------------------------------------
-# STICKERS - all sticker file_ids live in this single block.
-# Get a file_id: open /owner -> "Sticker file_id", then send any sticker to the bot.
-# Paste the ids below, or set the STICKER_* environment variables (no redeploy of code needed).
-# An empty value simply means "no sticker at this moment".
-# Recommended pack style: light line-art, minimal, calm limited palette.
+# STICKERS - the whole sticker configuration lives in this single block.
+#
+# 1) AUTOMATIC (default): at startup the bot loads the free public sticker sets listed in
+#    STICKER_SETS (set names from t.me/addstickers/<NAME>) and, for every key below, picks the first
+#    sticker whose emoji matches STICKER_EMOJIS. No file_id needed, no Telegram Premium needed.
+#    Sets are tried in order; a set that does not exist is skipped (see the log).
+#    Change the packs without touching the code: STICKER_SETS="PackOne,PackTwo" (environment variable).
+# 2) MANUAL OVERRIDE: paste a file_id into STICKERS (or set STICKER_WELCOME / STICKER_SUCCESS /
+#    STICKER_ERROR / STICKER_EMPTY). Get one via /owner -> "Sticker file_id". An override always wins.
+#
+# An empty value means "no sticker at this moment". Stickers appear only at key moments.
 # ----------------------------------------------------------------------------
+STICKER_SETS: list[str] = [
+    n.strip() for n in os.getenv("STICKER_SETS", "UtyaDuck,HotCherry").split(",") if n.strip()
+]
+STICKER_EMOJIS: dict[str, list[str]] = {  # first emoji that exists in a set wins
+    "welcome": ["👋", "🙋", "😊", "🥰", "😍", "👍"],
+    "success": ["🎉", "🥳", "✅", "👍", "😎", "💪"],
+    "error": ["😅", "🙈", "😬", "😢", "😔", "🤦"],
+    "empty": ["🤷", "🔍", "🤔", "😕", "🥲", "😔"],
+}
 STICKERS: dict[str, str] = {
     "welcome": os.getenv("STICKER_WELCOME", ""),  # first /start, after language choice
     "success": os.getenv("STICKER_SUCCESS", ""),  # anime added, episodes finished
@@ -332,6 +347,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "adm_notice_title": "🛠 Admin",
         "adm_notice": "Sizga admin huquqi berildi. /admin ni bosing.",
         "sticker_prompt": "Istalgan stikerni yuboring, men uning file_id sini qaytaraman.",
+        "sticker_status": "Hozirgi stikerlar (bo'sh bo'lsa, stiker yuborilmaydi):\n{status}",
         "sticker_id": "<code>{fid}</code>\n\nBu qiymatni kodning STICKERS blokiga yoki STICKER_* o'zgaruvchisiga qo'ying.",
         # genres
         "g_action": "Jangari",
@@ -553,6 +569,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "adm_notice_title": "🛠 Админ",
         "adm_notice": "Вам выданы права администратора. Нажмите /admin.",
         "sticker_prompt": "Отправьте любой стикер, и я верну его file_id.",
+        "sticker_status": "Текущие стикеры (если пусто, стикер не отправляется):\n{status}",
         "sticker_id": "<code>{fid}</code>\n\nВставьте это значение в блок STICKERS в коде или в переменную STICKER_*.",
         "g_action": "Боевик",
         "g_adventure": "Приключения",
@@ -1177,6 +1194,34 @@ async def render(event: Message | CallbackQuery, text: str, markup: Optional[Inl
 
 async def send(chat_id: int, text: str, markup: Optional[InlineKeyboardMarkup] = None) -> Optional[Message]:
     return await safe(lambda: BOT.send_message(chat_id, text, reply_markup=markup))
+
+
+def _plain_emoji(value: str) -> str:
+    return value.replace("\ufe0f", "").strip()
+
+
+async def load_stickers() -> None:
+    """Fill every empty STICKERS slot from the free public sets in STICKER_SETS (matched by emoji)."""
+    wanted = [key for key, file_id in STICKERS.items() if not file_id]
+    if not wanted or not STICKER_SETS:
+        return
+    pool: list[tuple[str, str]] = []  # (emoji, file_id) in set priority order
+    for name in STICKER_SETS:
+        try:
+            sticker_set = await BOT.get_sticker_set(name)
+        except TelegramAPIError as e:
+            log.warning("Sticker set %r is not available: %s", name, e)
+            continue
+        pool += [(_plain_emoji(s.emoji or ""), s.file_id) for s in sticker_set.stickers]
+        log.info("Sticker set %r loaded (%d stickers)", name, len(sticker_set.stickers))
+    for key in wanted:
+        for emoji in STICKER_EMOJIS.get(key, []):
+            found = next((fid for em, fid in pool if em == _plain_emoji(emoji)), None)
+            if found:
+                STICKERS[key] = found
+                break
+        else:
+            log.warning("No sticker found for %r - it will be skipped", key)
 
 
 async def send_sticker(chat_id: int, key: str) -> None:
@@ -2825,7 +2870,9 @@ async def cb_sticker_helper(cb: CallbackQuery, state: FSMContext, lang: str):
     await ack(cb)
     await reset_flow(state, cb.from_user.id)
     await state.set_state(OwnerS.sticker)
-    await render(cb, card(t(lang, "o_sticker"), t(lang, "sticker_prompt")), kb_back_owner(lang))
+    status = "\n".join(f"{key} {'✅' if file_id else '—'}" for key, file_id in STICKERS.items())
+    body = t(lang, "sticker_prompt") + "\n\n" + t(lang, "sticker_status", status=status)
+    await render(cb, card(t(lang, "o_sticker"), body), kb_back_owner(lang))
 
 
 @owner_router.message(OwnerS.sticker, F.sticker)
@@ -2909,6 +2956,10 @@ async def main() -> None:
         # Order matters: commands first, then admin / owner flows, then user flows, then fallbacks.
         dp.include_routers(cmd_router, admin_router, owner_router, user_router, fallback_router)
 
+        try:
+            await load_stickers()
+        except Exception as e:  # stickers are decoration - never stop the bot because of them
+            log.warning("Loading stickers failed: %s", e)
         await setup_commands()
         await BOT.delete_webhook(drop_pending_updates=False)
         log.info("AniZone started as @%s", BOT_USERNAME)
